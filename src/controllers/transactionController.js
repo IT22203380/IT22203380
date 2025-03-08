@@ -1,4 +1,5 @@
 const Transaction = require("../models/Transaction");
+const Goal = require("../models/Goal");
 
 // @desc   Create a transaction
 // @route  POST /api/transactions
@@ -22,6 +23,24 @@ const createTransaction = async (req, res) => {
       recurrencePattern,
       endDate,
     });
+
+    // Allocate savings when type is "income"
+    if (type === "income") {
+      const goals = await Goal.find({ user: req.user.id, isCompleted: false });
+
+      if (goals.length > 0) {
+        const allocation = amount * 0.1; // Allocate 10% of income to savings
+        const goal = goals[0]; // Allocate to the first active goal
+
+        goal.savedAmount += allocation;
+
+        if (goal.savedAmount >= goal.targetAmount) {
+          goal.isCompleted = true;
+        }
+
+        await goal.save();
+      }
+    }
 
     res.status(201).json(transaction);
   } catch (error) {
@@ -88,6 +107,36 @@ const deleteTransaction = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
+
+  const { getExchangeRate } = require("../utils/currencyUtils");
+
+// Modify createTransaction function
+const createTransaction = async (req, res) => {
+  try {
+    const { type, amount, currency, category, description, tags } = req.body;
+
+    const exchangeRate = await getExchangeRate(currency);
+    const convertedAmount = amount / exchangeRate; // Convert to USD
+
+    const newTransaction = new Transaction({
+      user: req.user.id,
+      type,
+      amount,
+      currency,
+      exchangeRate,
+      convertedAmount,
+      category,
+      description,
+      tags,
+    });
+
+    await newTransaction.save();
+    res.status(201).json({ message: "Transaction added successfully", transaction: newTransaction });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 };
 
 module.exports = { createTransaction, getTransactions, getTransactionById, updateTransaction, deleteTransaction };
