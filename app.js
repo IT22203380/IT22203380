@@ -9,6 +9,7 @@ const authRoutes = require("./src/routes/authRoutes.js");
 const transactionRoutes = require("./src/routes/transactionRoutes.js");
 const budgetRoutes = require("./src/routes/budgetRoutes");
 const reportRoutes = require("./src/routes/reportRoutes");
+const notificationRoutes = require("./src/routes/notificationRoutes");
 
 
 
@@ -26,6 +27,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/budgets", budgetRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 
 
