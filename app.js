@@ -7,6 +7,8 @@ const cookieParser = require("cookie-parser");
 
 const authRoutes = require("./src/routes/authRoutes.js");
 const transactionRoutes = require("./src/routes/transactionRoutes.js");
+const budgetRoutes = require("./src/routes/budgetRoutes");
+
 
 const app = express();
 
@@ -20,6 +22,7 @@ app.use(cookieParser());
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/transactions", transactionRoutes);
+app.use("/api/budgets", budgetRoutes);
 
 
 app.get("/", (req, res) => {
