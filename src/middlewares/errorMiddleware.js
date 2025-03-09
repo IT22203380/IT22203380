@@ -12,6 +12,10 @@ const errorHandler = (err, req, res, next) => {
     message: err.message || "Internal Server Error",
     stack: process.env.NODE_ENV === "production" ? null : err.stack,
   });
+
+  app.use((req, res, next) => {
+    res.status(404).send('Not Found');
+});
 };
 
 module.exports = errorHandler;
