@@ -43,4 +43,10 @@ app.use(
   })
 );
 
+app.use('*', (req, res, next) => {
+  const error = new Error('Not Found');
+  res.status(404); // Set the response status to 404
+  next(error); // Pass the error to the error handler
+});
+
 module.exports = app;
