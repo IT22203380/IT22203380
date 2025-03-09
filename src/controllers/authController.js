@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
+const asyncHandler = require("express-async-handler");
 
 // Generate JWT Token
 const generateToken = (user) => {
@@ -10,68 +11,68 @@ const generateToken = (user) => {
 
 // @desc   Register new user
 // @route  POST /api/auth/register
-const registerUser = async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
+const registerUser = asyncHandler(async (req, res) => {
+  const { name, email, password, role } = req.body;
 
-    // Check if user exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: "User already exists" });
-
-    // Create new user
-    const user = await User.create({ name, email, password, role });
-
-    // Return token
-    res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      token: generateToken(user),
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+  // Check if user exists
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    res.status(400);
+    throw new Error("User already exists");
   }
-};
+
+  // Create new user
+  const user = await User.create({ name, email, password, role });
+
+  // Return token
+  res.status(201).json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    token: generateToken(user),
+  });
+});
 
 // @desc   Login user
 // @route  POST /api/auth/login
-const loginUser = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+const loginUser = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
 
-    // Check user existence
-    const user = await User.findOne({ email });
-    if (!user) return res.status(401).json({ message: "Invalid credentials" });
-
-    // Validate password
-    const isMatch = await user.matchPassword(password);
-    if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
-
-    // Return token
-    res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      token: generateToken(user),
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+  // Check user existence
+  const user = await User.findOne({ email });
+  if (!user) {
+    res.status(401);
+    throw new Error("Invalid credentials");
   }
-};
+
+  // Validate password
+  const isMatch = await user.matchPassword(password);
+  if (!isMatch) {
+    res.status(401);
+    throw new Error("Invalid credentials");
+  }
+
+  // Return token
+  res.json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    token: generateToken(user),
+  });
+});
 
 // @desc   Get current user
 // @route  GET /api/auth/me
-const getCurrentUser = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select("-password"); // Exclude password
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    res.json(user);
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+const getCurrentUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id).select("-password"); // Exclude password
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
   }
-};
+
+  res.json(user);
+});
 
 module.exports = { registerUser, loginUser, getCurrentUser };
